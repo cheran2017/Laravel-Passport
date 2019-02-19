@@ -4,7 +4,7 @@
 ## Steps
 
 - Download the source
-- Run composer install && npm install
+- Run composer install && npm install && npm run dev
 - Setup .env file
 - Run php artisan migrate
 - Run php artisan serve --port=2000
