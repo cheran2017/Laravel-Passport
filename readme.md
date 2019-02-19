@@ -77,7 +77,7 @@
 
 - Replace the client id and secret key from passport app
 - Run consumer app in 3000 port i.e php artisan serve --port=3000
-- Add this button in welcome page  <pre><a href="{{url('redirect')}}">Login Using Resource Server</a></pre>
+- Add this url in a href tag in welcome page  <pre>a href="{{url('redirect')}}">Login Using Resource Server</></pre>
 
 
 ##  Consumer App Welcome Page
