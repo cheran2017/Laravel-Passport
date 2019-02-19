@@ -1,4 +1,4 @@
-"# Laravel Passport"
+# Laravel Passport
 
 
 ## Steps
@@ -8,6 +8,7 @@
 - Setup .env file
 - Run php artisan migrate
 - Run php artisan serve --port=2000
+- Register and Login 
 - Create Oauth client token 
 
 ##  Create Oauth Credianals
