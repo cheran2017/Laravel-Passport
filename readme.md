@@ -9,6 +9,11 @@
 - Run php artisan migrate
 - Run php artisan serve --port=2000
 - Create Oauth client token 
+
+##  Create Oauth Credianals
+
+<p align="center"><img src="images/oauth.png"></p>
+
 - Dowload another laravel app(it is called as consumer app)
 - Add token field in users table in consumer app
 - Copy and Paste the codes in web.php which I have given below
