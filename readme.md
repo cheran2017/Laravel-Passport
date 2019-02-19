@@ -1,69 +1,109 @@
-<p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
+"# Laravel Passport"
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
 
-## About Laravel
+## Steps
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as:
+- Download the source
+- Run composer install && npm install
+- Setup .env file
+- Run php artisan migrate
+- Run php artisan serve --port=2000
+- Create Oauth client token 
+- Dowload another laravel app(it is called as consumer app)
+- Add token field in users table in consumer app
+- Copy and Paste the codes in web.php which I have given below
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<pre>
+	use Illuminate\Http\Request;
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications.
+	// First route that user visits on consumer app
+	Route::get('/redirect', function () {
+	    // Build the query parameter string to pass auth information to our request
+	    $query = http_build_query([
+	        'client_id' => 1,
+	        'redirect_uri' => 'http://localhost:3000/callback',
+	        'response_type' => 'code',
+	        'scope' => '*'
+	    ]);
+	    // Redirect the user to the OAuth authorization page
+	    return redirect('http://localhost:2000/oauth/authorize?' . $query);
+	});
 
-## Learning Laravel
+	// Route that user is forwarded back to after approving on server
+	Route::get('callback', function (Request $request) {
+	    $http = new GuzzleHttp\Client;
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of any modern web application framework, making it a breeze to get started learning the framework.
+	    $response = $http->post('http://localhost:2000/oauth/token', [
+	        'form_params' => [
+	            'grant_type' => 'authorization_code',
+	            'client_id' => 1, // from admin panel above
+	            'client_secret' => 'Ys0ftKDZlAAB8riybyApoVhmpkMpYXEtd1FoVtNI', // from admin panel above
+	            'redirect_uri' => 'http://localhost:3000/callback',
+	            'code' => $request->code // Get code from the callback
+	        ]
+	    ]);
+	    $token = 'Bearer '.json_decode((string) $response->getBody(), true)['access_token'];
+	    if (!empty($token)) {
+	        $request = $http->request('GET', 'http://localhost:2000/api/user',
+	        	[
+	        		'headers' => [
+			        	'Accept' 	=> 'application/json',
+			        	'Authorization'	=> $token
+			        ]
+	        ]);
+	      	$user = json_decode($request->getBody()->getContents());
+	      	if (!empty($user)) {
+	      		// dd($token);
+	          $search = \App\User::where('email',$user->email)->first();
+	          if (empty($search)) {
+	            $user = \App\User::create([ 
+	              'name' => $user->name, 
+	              'email' => $user->email, 
+	              'token' => $token
+	            ]);  
+	          } else {
+	            $user = $search;
+	          }
+	      		
+	      		Auth::loginUsingId($user->id);
+	          return redirect('welcome');
+	      	}
+	    	
+		} 
+	    // echo the access token; normally we would save this in the DB
+	    return json_decode((string) $response->getBody(), true)['access_token'];
+	});
+</pre>
 
-If you're not in the mood to read, [Laracasts](https://laracasts.com) contains over 1100 video tutorials on a range of topics including Laravel, modern PHP, unit testing, JavaScript, and more. Boost the skill level of yourself and your entire team by digging into our comprehensive video library.
+- Replace the client id and secret key from passport app
+- Run consumer app in 3000 port i.e php artisan serve --port=3000
+- Add this button in welcome page  <a href="{{url('redirect')}}">Login Using Resource Server</a>
 
-## Laravel Sponsors
 
-We would like to extend our thanks to the following sponsors for helping fund on-going Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell):
+##  Consumer App Welcome Page
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
+<p align="center"><img src="images/consumer-welcome.png"></p>
 
-## Contributing
+- Click the button if your configuration is correct the the consumer app take you to resource(passport app) app login page
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-## Security Vulnerabilities
+##  Passport Login Page 
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+<p align="center"><img src="images/passport-login.png"></p>
 
-## License
+- Enter the login details which is stored in passport app
+- If the login details is valid it will ask the permission for Authorize
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+##  Ask Permission
+
+<p align="center"><img src="images/authorized.png"></p>
+
+-  Finally it will take you back to consumer app and start the session
+
+##  Back to Consumer App
+
+<p align="center"><img src="images/consumer.png"></p>
+
+
+
+
